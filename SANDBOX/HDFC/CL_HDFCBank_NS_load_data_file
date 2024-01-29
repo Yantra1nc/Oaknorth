@@ -1,0 +1,503 @@
+/**
+ * @NApiVersion 2.x
+ * @NScriptType ClientScript
+ * @NModuleScope SameAccount
+ */
+/** File Name: CL_HDFCBank_NS_load_data_file.js
+ * File ID: 
+ * Date Created: 04 Augst 2022
+ * Author: Pralhad Solanke
+ * Company: Yantra Tech Innovation Lab Pvt. Ltd.
+ * email: pralhad@yantrainc.com
+ * Description: This script is used to create validate and load data on suitelet script UI .
+ */
+/**
+ * Script Modification Log:
+ * 
+    -- Date -- -- Modified By -- --Requested By-- -- Description --
+
+ *
+ */
+
+define(['N/error', 'N/log', 'N/record', 'N/runtime', 'N/currentRecord', 'N/search', 'N/format', 'N/url'],
+		function(error, log, record, runtime, currentRecord, search, format, url) {
+
+	function searchlist() {
+		try {
+			var o_recordOBJ = currentRecord.get();
+
+			var dStartDate = o_recordOBJ.getText({ fieldId: "custpage_startdate" }); 
+			var dEndDate = o_recordOBJ.getText({ fieldId: "custpage_enddate" });
+			var dDueStartDate = o_recordOBJ.getText({ fieldId: "custpage_due_startdate" });
+			var dDueEndDate = o_recordOBJ.getText({ fieldId: "custpage_due_enddate" });
+			var vendorId = o_recordOBJ.getValue({ fieldId: "custpage_vendorname" });
+			var subsidaryId = o_recordOBJ.getValue({ fieldId: "custpage_subsidary" });
+			var locationId = o_recordOBJ.getValue({ fieldId: "custpage_location" });
+			var payment_method = o_recordOBJ.getValue({ fieldId: "custpage_bank_payment_method" });
+			var payment_method_STR = o_recordOBJ.getText({ fieldId: "custpage_bank_payment_method" });
+			var bankAccount = o_recordOBJ.getValue({ fieldId: "custpage_bank_account" });			
+			var bankAccountString = o_recordOBJ.getText({ fieldId: "custpage_bank_account" });
+			var bankAccountNo = o_recordOBJ.getValue({ fieldId: "custpage_bank_account_no" });			
+
+			if(!_logValidation(payment_method))
+			{
+				alert("Please enter value(s) for Payment Method");
+				return false;
+			}
+			/*if(!_logValidation(payment_tran_type))
+			{
+               alert("Please enter value(s) for Payment Transaction Type");
+			   return false;							
+			}*/
+			if(!_logValidation(bankAccount))
+			{
+				alert("Please enter value(s) for Bank Account");
+				return false;
+			}
+			if(!_logValidation(bankAccountNo))
+			{
+				alert("Please enter value(s) for Bank Account No");
+				return false;
+			}
+			if(!_logValidation(dStartDate) || !_logValidation(dEndDate))
+			{
+				alert("Please enter value(s) for Bill Start & End Date");
+				return false;							
+			}
+
+
+
+			var s_URL = url.resolveScript({ scriptId: 'customscript_su_hdfc_ns_gen_outpaymt_fil', deploymentId: 'customdeploy_su_hdfc_ns_gen_outpaymt_fil' });  		
+			s_URL += '&paramStartDate=' + dStartDate;
+			s_URL += '&paramEndDate=' + dEndDate;
+			s_URL += '&paramDueStartDate=' + dDueStartDate;
+			s_URL += '&paramDueEndDate=' + dDueEndDate;
+			s_URL += '&paramVendorID=' + vendorId;
+			s_URL += '&paramSubsidaryID=' + subsidaryId;
+			s_URL +='&paramLocationID='+locationId;
+			s_URL +='&payment_method_str=' +payment_method_STR;
+			s_URL +='&parampayment_method='+payment_method;
+			//s_URL +='&parampayment_transactiontype='+payment_tran_type;
+			s_URL += '&paramBankAccount='+ bankAccount ;
+			s_URL += '&paramBankAccountString='+ bankAccountString ;
+			s_URL += '&paramBankAccountNo='+ bankAccountNo ;
+
+			window.onbeforeunload = null;
+			window.open(s_URL, '_self', null, null);
+		} catch (excjdk) {
+			//alert('Exception Caught -->' + excjdk);
+			log.error("Search Error",excjdk);
+		}
+
+	}
+	function markAll() {
+		try {
+			var currentRec = currentRecord.get();
+			var subListLinesCount = currentRec.getLineCount({ sublistId: 'custpage_sublist' });
+			log.debug("markAll function sublistlineCount", subListLinesCount);
+			if (subListLinesCount) {
+				for (var lineCount = 0; subListLinesCount != null && lineCount < subListLinesCount; lineCount++) {
+					currentRec.selectLine({ sublistId: 'custpage_sublist', line: lineCount });
+					currentRec.setCurrentSublistValue({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_select', value: true });
+					rec.commitLine({ sublistId: 'custpage_sublist' });
+				}
+			}
+		} catch (e) {
+			//alert("Error" + e);
+			//log.error("Search Error", JSON.stringify(e))
+			log.error("Search Error",e);
+		}
+	}
+
+	function unmarkAll() {
+		try {
+			var currentRec = currentRecord.get();
+			var subListLinesCount = currentRec.getLineCount({ sublistId: 'custpage_sublist' });
+			log.debug("UnmarkAll function sublistlineCount", subListLinesCount);
+			if (subListLinesCount) {
+				for (var lineCount = 0; subListLinesCount != null && lineCount < subListLinesCount; lineCount++) {
+					currentRec.selectLine({ sublistId: 'custpage_sublist', line: lineCount });
+					currentRec.setCurrentSublistValue({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_select', value: false });
+					rec.commitLine({ sublistId: 'custpage_sublist' });
+				}
+			}
+		} catch (e) {
+			//alert("Error" + e);
+			//log.error("Search Error", JSON.stringify(e))
+			log.error("Search Error",e);
+		}
+	}
+	/*function process() {
+        try
+        {
+            var currentRec = currentRecord.get();
+            var d_check_value = currentRec.getValue({
+                sublistId: 'custsublistid',
+                fieldId: "custcheckbox"
+            });
+            log.debug("log check", d_check_value)
+            if(d_check_value=='true')
+            {
+                var d_sublist_InternalId = currentRec.getValue({
+                    fieldId: "custinteridsublist"
+                });
+
+            }
+            var s_URL = url.resolveScript({
+                scriptId: 'customscript_su_hdfc_ns_gen_outpaymt_fil',
+                deploymentId: 'customdeploy_su_hdfc_ns_gen_outpaymt_fil'
+            }); //suitlet id 		
+            s_URL += '&custinteridsublist=' + d_sublist_InternalId;
+            log.debug("internal Id",d_sublist_InternalId);
+        }catch(e){
+            log.error(" Error",e);
+        }
+
+    }*/
+	function pageInit(context) {
+
+	}
+
+	function fieldChanged(context)
+	{
+		try
+		{
+
+			if(context.fieldId == 'custpage_subsidary')
+			{
+				//------------------------------------------------------ Start - Get Accounts  ---------------------------------------------------------------------------------//
+
+				var subsidiaryId = context.currentRecord.getValue({fieldId: 'custpage_subsidary'});
+				var objBankAccount = context.currentRecord.getField({fieldId: 'custpage_bank_account'});
+				objBankAccount.removeSelectOption({value: null});
+				objBankAccount.insertSelectOption({value: ' ',text:' '});
+				var bankAccountId="";
+				var bankAccountName="";
+				var customrecord_ns_hdfc_account_number_SearchObj = search.create({type: "customrecord_ns_hdfc_account_number_",
+					filters:
+						[
+							["isinactive","is","F"],"AND",["custrecord_ns_subsidiary_","is",subsidiaryId]
+							],
+							columns:
+								[									
+									search.createColumn({name: "custrecord_ns_coa_", label: "Chart of Account"}),
+									//search.createColumn({name: "custrecord_ns_bank_account_number_", label: "Bank Account Number"})
+									]
+				});
+				var searchResultCount = customrecord_ns_hdfc_account_number_SearchObj.runPaged().count;
+				log.debug("customrecord_ns_hdfc_account_number_SearchObj result count",searchResultCount);
+				customrecord_ns_hdfc_account_number_SearchObj.run().each(function(result){
+					// .run().each has a limit of 4,000 results					
+					bankAccountId = result.getValue({name: "custrecord_ns_coa_", label: "Chart of Account"});
+					bankAccountName = result.getText({name: "custrecord_ns_coa_", label: "Chart of Account"});				
+
+					objBankAccount.insertSelectOption({ value: bankAccountId, text:bankAccountName});
+
+					return true;
+				});
+
+				//-------------------------------------------------------- End - Get Accounts ----------------------------------------------------------------------------//
+			}
+
+
+
+
+			var bankAccountNo = "";
+			if(context.fieldId == 'custpage_bank_account')
+			{
+
+
+				/*		if(_logValidation(bankAccountId))	{
+					var resultIndexSN	= 0; 
+					var resultStepSN	= 1000;
+					var objSearchAccount = search.create({type: "account",
+						filters:
+							[
+								["type","anyof","Bank"], "AND", ["internalid","anyof",bankAccountId], "AND", ["isinactive","is","F"]
+								],
+								columns:
+									[
+										search.createColumn({name: "internalid"}),
+										search.createColumn({name: "custrecord_account_number"}),
+										search.createColumn({name: "name",sort: search.Sort.ASC})
+										]
+					});
+					do{
+						var objSearchResultAccount = objSearchAccount.run().getRange({start: resultIndexSN, end: resultIndexSN + resultStepSN});
+
+						if(objSearchResultAccount.length > 0){
+							for(var s in objSearchResultAccount) {
+								bankAccountNo = objSearchResultAccount[s].getValue({name: "custrecord_account_number"});
+							}
+							// increase pointer
+							resultIndexSN = resultIndexSN + resultStepSN;
+						}
+					} while (objSearchResultAccount.length > 0); 
+
+					if(bankAccountNo)
+						context.currentRecord.setValue({fieldId: 'custpage_bank_account_no',value :bankAccountNo });
+				}
+				if(!_logValidation(bankAccountId))
+				{
+					context.currentRecord.setValue({fieldId: 'custpage_bank_account_no',value :"" });
+				}*/
+
+				var bankAccountNo="";
+				var bankAccountId = context.currentRecord.getValue({fieldId: 'custpage_bank_account'});
+				var subsidiaryId = context.currentRecord.getValue({fieldId: 'custpage_subsidary'});
+				var customrecord_ns_hdfc_account_number_SearchObj = search.create({type: "customrecord_ns_hdfc_account_number_",
+					filters:
+						[
+							["isinactive","is","F"],"AND",["custrecord_ns_subsidiary_","is",subsidiaryId],"AND",["custrecord_ns_coa_","is",bankAccountId]
+							],
+							columns:
+								[									
+									search.createColumn({name: "custrecord_ns_bank_account_number_", label: "Bank Account Number"})
+									]
+				});
+				var searchResultCount = customrecord_ns_hdfc_account_number_SearchObj.runPaged().count;
+				log.debug("customrecord_ns_hdfc_account_number_SearchObj result count",searchResultCount);
+				customrecord_ns_hdfc_account_number_SearchObj.run().each(function(result){
+					// .run().each has a limit of 4,000 results					
+					bankAccountNo = result.getValue({name: "custrecord_ns_bank_account_number_", label: "Bank Account Number"});
+
+					return true;
+				});
+
+				if(_logValidation(bankAccountNo))
+					context.currentRecord.setValue({fieldId: 'custpage_bank_account_no',value :bankAccountNo });				
+
+				if(!_logValidation(bankAccountNo)){
+					context.currentRecord.setValue({fieldId: 'custpage_bank_account_no',value :"" });
+				}
+			} 
+
+			if(context.fieldId == 'custpage_sublist_amttobepaid')
+			{
+				var subListLinesCount = context.currentRecord.getLineCount({ sublistId: 'custpage_sublist' });
+
+				var amountTobePaid = context.currentRecord.getCurrentSublistValue({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_amttobepaid'});
+				var amountDue = context.currentRecord.getCurrentSublistValue({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_amtdue'});						
+
+				if(amountTobePaid && amountDue ){
+
+					if(Number(amountTobePaid)>Number(amountDue)){
+						alert(' Amount To Be Paid should be less than/equal to Amount Due');
+						return false;
+					}
+					else{
+						return true;
+					}
+				}					
+			}
+			if(context.fieldId == 'custpage_enddate')
+			{
+				var billStartDate = context.currentRecord.getText({ fieldId: 'custpage_startdate'});
+				var billEndDate = context.currentRecord.getText({ fieldId: 'custpage_enddate'});
+
+				if(billStartDate){					
+					billStartDate = format.format({value: billStartDate, type: format.Type.DATE});
+					billStartDate = format.parse({value: billStartDate, type: format.Type.DATE});
+				}
+
+				if(billEndDate){					
+					billEndDate = format.format({value: billEndDate, type: format.Type.DATE});
+					billEndDate = format.parse({value: billEndDate, type: format.Type.DATE});
+				}
+
+				if(billStartDate > billEndDate){
+					alert('Bill End Date should be greater than Bill Start Date ');
+					context.currentRecord.setValue({ fieldId: 'custpage_enddate',value:new Date()});
+					return false;
+				}
+				else{
+					return true;
+				}
+			}
+			if(context.fieldId == 'custpage_due_enddate')
+			{
+				var billDueStartDate = context.currentRecord.getText({ fieldId: 'custpage_due_startdate'});
+				var billDueEndDate = context.currentRecord.getText({ fieldId: 'custpage_due_enddate'});
+
+				if(billDueStartDate){					
+					billDueStartDate = format.format({value: billDueStartDate, type: format.Type.DATE});
+					billDueStartDate = format.parse({value: billDueStartDate, type: format.Type.DATE});
+				}
+
+				if(billDueEndDate){					
+					billDueEndDate = format.format({value: billDueEndDate, type: format.Type.DATE});
+					billDueEndDate = format.parse({value: billDueEndDate, type: format.Type.DATE});
+				}
+
+				if(billDueStartDate > billDueEndDate){
+					alert('Bill Due End Date should be greater than Bill Due Start Date ');
+					context.currentRecord.setValue({ fieldId: 'custpage_due_enddate',value:new Date()});
+					return false;
+				}
+				else{
+					return true;
+				}
+
+			}
+			if(context.fieldId == 'custpage_sublist_payment_date')
+			{
+				var paymentDate = context.currentRecord.getCurrentSublistValue({sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_payment_date'});				
+				//alert('paymentDate=='+paymentDate);
+				//alert('new Date()=='+new Date());
+
+				if(paymentDate<new Date()){
+					alert('Please select Todays date or future date for payment');
+					context.currentRecord.setCurrentSublistValue({sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_payment_date', value: new Date(),ignoreFieldChange: true,fireSlavingSync: true});
+					return false;
+				}
+				else{
+					return true;
+				}
+			}
+
+		}	
+		catch(excc)
+		{
+			alert(excc);
+		}
+	}
+
+	function saveRecord(context){
+
+		var arrBillinternalId = new Array();
+		var arrBill = new Array();
+		var currentRecord = context.currentRecord;
+
+		try{
+
+			var bankPaymentMethod = currentRecord.getValue({fieldId:'custpage_bank_payment_method'});
+			//alert('bankPaymentMethod=='+bankPaymentMethod);
+
+			var subListLinesCount = currentRecord.getLineCount({ sublistId: 'custpage_sublist' });
+
+			if(subListLinesCount && subListLinesCount>0){
+				for(var s=0;s<subListLinesCount;s++){
+					var bCheckboxValue = currentRecord.getSublistValue({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_select',line: s});
+					var billInternalId = currentRecord.getSublistValue({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_internalid',line: s});
+					if(bCheckboxValue){
+						if(billInternalId){
+							arrBillinternalId.push(billInternalId)
+						}
+						var amountToBePaid = currentRecord.getSublistValue({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_amttobepaid',line: s});
+						if(amountToBePaid && amountToBePaid<200000){
+							var sbill = currentRecord.getSublistText({ sublistId: 'custpage_sublist', fieldId: 'custpage_sublist_internalid',line: s});
+							if(sbill){
+								arrBill.push(sbill);
+							}
+						}
+					}
+				}
+				//alert('arrBillinternalId=='+arrBillinternalId)
+				if( !arrBillinternalId || arrBillinternalId.length<=0){
+					//if( !arrBillinternalId){
+					alert('Please select one bill atleast to proceed further ! ');
+					return false
+				}
+				if((bankPaymentMethod && bankPaymentMethod=='R') && (arrBill && arrBill.length>0)){					
+					alert('These Transactions are not eligible for RTGS Payment: '+arrBill);
+					return false
+				}
+			}	
+		}
+		catch(ex)
+		{
+			alert(ex);
+		}
+		return true
+	}
+
+
+	function refresh()
+	{
+		var s_URL = url.resolveScript({ scriptId: 'customscript_su_hdfc_ns_gen_outpaymt_fil', deploymentId: 'customdeploy_su_hdfc_ns_gen_outpaymt_fil' }); 
+		window.onbeforeunload = null;
+		window.open(s_URL, '_self', null, null);
+	}
+	function payment_total()
+	{
+		var tran_array = new Array();	
+		var amt_array = new Array();
+		var totalAmount = 0;
+		try
+		{
+
+			var currentRec = currentRecord.get();
+			var subListLinesCount = currentRec.getLineCount({sublistId: 'custpage_sublist'});
+
+			if(subListLinesCount) 
+			{
+				for(var lineCount = 0; subListLinesCount != null && lineCount < subListLinesCount; lineCount++) 
+				{
+					currentRec.selectLine({sublistId: 'custpage_sublist',line: lineCount});
+
+					var f_check  = currentRec.getCurrentSublistValue({sublistId: 'custpage_sublist',fieldId: 'custpage_sublist_select'});
+
+					if(f_check == true)
+					{
+						/*var ID_No  = currentRec.getCurrentSublistValue({sublistId: 'custsublistid',fieldId: 'custpage_in_id'});	
+
+						tran_array.push(ID_No);
+
+						var amt_paid  = currentRec.getCurrentSublistValue({sublistId: 'custsublistid',fieldId: 'custamtedit'});	
+
+						amt_array.push(amt_paid);*/
+
+						var amtToBePaid  = currentRec.getCurrentSublistValue({sublistId: 'custpage_sublist',fieldId: 'custpage_sublist_amttobepaid'});
+
+						if(amtToBePaid){
+							totalAmount = parseFloat(totalAmount) + parseFloat(amtToBePaid)
+						}
+					}
+				}
+
+				if(totalAmount){
+					currentRec.setValue({ fieldId: 'custpage_total_transaction_value',value:totalAmount.toFixed(2)});
+				}
+				else{
+					currentRec.setValue({ fieldId: 'custpage_total_transaction_value',value:' '});
+				}
+
+			}
+
+			/*	var s_URL = url.resolveScript({ scriptId: 'customscript_su_skkmt_payment_total', deploymentId: 'customdeploy1' }); //suitlet id
+			s_URL+='&id_array='+tran_array;
+			s_URL+='&amt_array='+amt_array;  
+
+			window.onbeforeunload = null;
+			window.open(s_URL,null, null, null);		*/	
+
+		}	
+		catch(excrwq)
+		{
+			alert(excrwq); 
+		}
+		return tran_array ;	  
+	}
+	function _logValidation(value)
+	{
+		if(value!=null && value!= 'undefined' && value!=undefined && value!='' && value!='NaN' && value!=' '&& value!="0000-00-00")
+		{
+			return true;
+		}	 
+		else	  
+		{
+			return false;
+		}
+	}
+	return {
+		searchlist: searchlist,
+		pageInit:pageInit,
+		markAll:markAll,
+		unmarkAll:unmarkAll,
+		refresh : refresh ,
+		payment_total : payment_total,
+		//process:process,
+		fieldChanged : fieldChanged,
+		saveRecord: saveRecord
+	};
+});
